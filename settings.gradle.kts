@@ -23,4 +23,5 @@ include(
     ":core:dsp",
     ":core:formats",
     ":core:data",
+    ":core:autoeq",
 )
