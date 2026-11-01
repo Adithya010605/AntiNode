@@ -365,9 +365,16 @@ private fun DrawScope.drawBypass(rects: Map<String, Rect>, measurer: androidx.co
         path, Palette.Beige4,
         style = Stroke(1.4.dp.toPx(), cap = StrokeCap.Round, pathEffect = PathEffect.dashPathEffect(floatArrayOf(3.dp.toPx(), 5.dp.toPx()))),
     )
+    // Label sits on the rail itself, with a gap cut out of the dashes, so it never touches the pills.
     val label = measurer.measure("BYPASS", Type.Stage)
-    val mid = Offset(rail - 12.dp.toPx(), (y1 + y2) / 2)
+    val mid = Offset(rail, (y1 + y2) / 2)
     rotate(-90f, mid) {
+        val pad = 6.dp.toPx()
+        drawRect(
+            Palette.Ground,
+            topLeft = Offset(mid.x - label.size.width / 2f - pad, mid.y - label.size.height / 2f),
+            size = androidx.compose.ui.geometry.Size(label.size.width + 2 * pad, label.size.height.toFloat()),
+        )
         drawText(label, topLeft = Offset(mid.x - label.size.width / 2f, mid.y - label.size.height / 2f))
     }
 }

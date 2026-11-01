@@ -467,7 +467,7 @@ private fun Hint(ui: HomeUi, setup: Setup, onEnable: () -> Unit) {
             }
             ui.engine.problem != null -> Text(ui.engine.problem!!, style = style.copy(color = Palette.Amber))
             !ui.isConnected -> Text("Editing ${setup.name}. It plays when ${setup.deviceName} is connected.", style = style)
-            else -> Text("Dot connects an effect · tap a pill to edit\nSwipe the device, presets and profile · hold a preset for options", style = style)
+            else -> Text("Dot connects an effect · tap a pill to edit\nSwipe to switch · hold a preset for options", style = style)
         }
     }
 }

@@ -1,6 +1,6 @@
 # EQ App: Plan, Features & Tech Stack
 
-> Status: planning complete except UI. UI / design language to be defined next, then implementation starts.
+> Status: v0.1 implemented (core math + importers, Room data, background engine, circuit UI). Verified on an Android 16 emulator; real-phone testing with a USB DAC is next.
 > Platform: **Android only** (iOS dropped: it can't process other apps' audio).
 
 ---
@@ -191,7 +191,7 @@ Simulated conversion to bands vs the exact curve (assumes smooth blending betwee
 |---|---|
 | Language | **Kotlin 2.x** |
 | UI | **Jetpack Compose + Material 3**, Navigation Compose; EQ graph drawn on Compose Canvas (log axis, draggable filter points) |
-| Architecture | MVVM, ViewModel + StateFlow, Coroutines/Flow, **Hilt** |
+| Architecture | MVVM, ViewModel + StateFlow, Coroutines/Flow, manual DI (repository singleton) |
 | Audio engine | `DynamicsProcessing`, plus optional `Virtualizer`, `PresetReverb`, `LoudnessEnhancer` |
 | Background | Foreground service, start on boot, Quick Settings tile |
 | Device detection | `AudioDeviceCallback` + `AudioDeviceInfo` |
