@@ -1,4 +1,4 @@
-# EQ App: Plan, Features & Tech Stack
+# Antinode: Plan, Features & Tech Stack
 
 > Status: v0.1 implemented (core math + importers, Room data, background engine, circuit UI). Verified on an Android 16 emulator; real-phone testing with a USB DAC is next.
 > Platform: **Android only** (iOS dropped: it can't process other apps' audio).
@@ -160,6 +160,7 @@ Simulated conversion to bands vs the exact curve (assumes smooth blending betwee
 - **Look:** near-black background, warm beige elements (retro amp colours), kept subtle; optional faint amber for "signal active".
 - **Fonts:** headings and stage labels in **Cinzel** (engraved amp front-panel lettering); Archivo for UI text; IBM Plex Mono for values.
 - **Layout:** effect pills sit in a 2-column grid, never more than 2 per line; a line with a single pill (Gate, Limiter) centres it. Wires run straight from one connected pill to the next (left → right, then down); when a pill is off, the wire runs straight behind it down its column, changing column only in the gap just above the next connected pill. Spacing is tight.
+- **Icon:** a vacuum tube in beige outline with an amber glow in the glass (adaptive icon + outline-only themed icon).
 - **Mockup:** `mockup/home.html` (published as a private artifact).
 - **Home = signal chain drawn as connected nodes**, top → bottom, PCB-trace-style connectors (straight lines with 45° bends).
   - **Top pill:** the current output, e.g. the DAC, or DAC + IEM as one combined pill. Shows a device image.

@@ -10,7 +10,7 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.CircuitEQ">
+        android:theme="@style/Theme.Antinode">
 
         <activity
             android:name=".MainActivity"
@@ -21,7 +21,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- "Open with" for AutoEQ / APO .txt, Easy Effects .json and Circuit EQ presets -->
+            <!-- "Open with" for AutoEQ / APO .txt, Easy Effects .json and Antinode presets -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.SEND" />

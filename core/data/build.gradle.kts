@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "dev.circuiteq.core.data"
+    namespace = "dev.antinode.core.data"
     compileSdk = 37
     defaultConfig { minSdk = 28 }
     compileOptions {

@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "dev.circuiteq.app"
+    namespace = "dev.antinode.app"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "dev.circuiteq"
+        applicationId = "dev.antinode"
         minSdk = 28
         targetSdk = 36
         versionCode = 1

@@ -1,0 +1,6 @@
+<!-- Status bar / Quick Settings: the Antinode tube in outline. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="1.6" android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M8,17 V7.5 C8,5 9.8,3 12,3 C14.2,3 16,5 16,7.5 V17 M7,17 H17 V19.5 H7 Z M9.5,19.5 V21.5 M12,19.5 V22 M14.5,19.5 V21.5 M10,8 H14 V14 H10 Z M12,14 V17" />
+</vector>

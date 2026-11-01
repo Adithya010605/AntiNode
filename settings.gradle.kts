@@ -14,7 +14,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "CircuitEQ"
+rootProject.name = "Antinode"
 
 include(
     ":app",

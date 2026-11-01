@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "dev.circuiteq.engine"
+    namespace = "dev.antinode.engine"
     compileSdk = 37
     defaultConfig { minSdk = 28 }
     compileOptions {
