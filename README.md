@@ -14,6 +14,7 @@
   <img alt="No root" src="https://img.shields.io/badge/root-not%20needed-D8CBAF?style=flat-square&labelColor=0A0A09">
   <img alt="No internet permission" src="https://img.shields.io/badge/internet%20permission-none-D8CBAF?style=flat-square&labelColor=0A0A09">
   <img alt="AutoEQ profiles" src="https://img.shields.io/badge/AutoEQ%20profiles-8%2C849-E2A24E?style=flat-square&labelColor=0A0A09">
+  <img alt="MIT license" src="https://img.shields.io/badge/license-MIT-D8CBAF?style=flat-square&labelColor=0A0A09">
 </p>
 
 <p align="center">
@@ -142,5 +143,9 @@ iOS doesn't let any app process other apps' audio, so a system-wide EQ isn't pos
 - **[AutoEQ](https://github.com/jaakkopasanen/AutoEq)** by Jaakko Pasanen (MIT) — equalization profiles, targets and the method behind the generator. Measurements by oratory1990, crinacle, Rtings, Innerfidelity, Super Review, ToneDeafMonk, HypetheSonics and the other AutoEQ sources; all credit for the data goes to them.
 - Fonts: **Cinzel**, **Archivo** and **IBM Plex Mono** under the SIL Open Font License.
 - Full license texts ship inside the app under `assets/licenses`.
+
+## License
+
+Antinode is released under the [MIT License](LICENSE). The bundled AutoEQ data is MIT-licensed by its author, and the fonts are under the SIL Open Font License.
 
 <p align="center"><sub>Made by Adithya · tuned on 7Hz Salnotes Zero 2</sub></p>

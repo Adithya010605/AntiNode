@@ -24,3 +24,7 @@ __pycache__/
 *.pyc
 .venv/
 tools/catalog/work/
+
+# Local planning notes (not published)
+PLAN.md
+mockup/
