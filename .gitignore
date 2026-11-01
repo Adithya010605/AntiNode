@@ -28,3 +28,9 @@ tools/catalog/work/
 # Local planning notes (not published)
 PLAN.md
 mockup/
+
+# Release signing secrets
+keystore.properties
+
+# Release artifacts
+dist/
