@@ -1,0 +1,24 @@
+{
+    "output": {
+        "blocklist": [],
+        "equalizer#0": {
+            "bypass": false,
+            "input-gain": -3.0,
+            "output-gain": 0.0,
+            "mode": "IIR",
+            "num-bands": 3,
+            "split-channels": false,
+            "left": {
+                "band0": { "frequency": 105.0, "gain": -3.1, "mode": "RLC (BT)", "mute": false, "q": 0.7, "slope": "x1", "solo": false, "type": "Lo-shelf" },
+                "band1": { "frequency": 2680.1, "gain": 2.2, "mode": "RLC (BT)", "mute": false, "q": 1.44, "slope": "x1", "solo": false, "type": "Bell" },
+                "band2": { "frequency": 9000.0, "gain": 0.0, "mode": "RLC (BT)", "mute": false, "q": 0.7, "slope": "x1", "solo": false, "type": "Off" }
+            },
+            "right": {
+                "band0": { "frequency": 105.0, "gain": -3.1, "mode": "RLC (BT)", "mute": false, "q": 0.7, "slope": "x1", "solo": false, "type": "Lo-shelf" }
+            }
+        },
+        "limiter#0": { "bypass": false, "threshold": -1.0, "attack": 5.0, "release": 50.0 },
+        "crossfeed#0": { "bypass": false, "fcut": 700, "feed": 4.5 },
+        "plugins_order": ["equalizer#0", "crossfeed#0", "limiter#0"]
+    }
+}
