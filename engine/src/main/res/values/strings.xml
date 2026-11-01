@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tile_label">Circuit EQ</string>
+    <string name="channel_engine">Audio engine</string>
+    <string name="channel_engine_desc">Keeps your EQ running in the background. You can hide this notification.</string>
+</resources>
