@@ -1,0 +1,793 @@
+<title>Circuit EQ Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Cinzel:wght@500;600&display=swap">
+<style>
+  :root {
+    color-scheme: dark;
+    --bezel: #050505;
+    --ground: #0A0A09;
+    --panel: #121110;
+    --panel-2: #191814;
+    --beige: #D8CBAF;
+    --beige-2: #A39A86;
+    --beige-3: #6B6455;
+    --beige-4: #3A362E;
+    --amber: #E2A24E;
+    --f-display: "Cinzel", "Trajan Pro", Georgia, serif;
+    --f-ui: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bezel);
+    color: var(--beige);
+    font-family: var(--f-ui);
+    padding-inline: 16px;
+    padding-block: 28px;
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+  button:focus-visible, .device:focus-visible, .profile:focus-visible { outline: 1.5px solid var(--amber); outline-offset: 3px; }
+
+  .phone {
+    position: relative;
+    max-width: 400px;
+    margin: 0 auto;
+    background: var(--ground);
+    border: 1px solid #1E1C18;
+    border-radius: 36px;
+    padding: 18px 16px 22px;
+    overflow: hidden;
+  }
+  @media (max-width: 440px) {
+    body { padding-inline: 0; padding-block: 0; }
+    .phone { border: 0; border-radius: 0; min-height: 100vh; }
+  }
+
+  /* ---------- top bar ---------- */
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .profile {
+    display: flex; align-items: center; gap: 9px;
+    height: 38px; padding: 0 14px 0 4px;
+    border: 1px solid var(--beige-4); border-radius: 999px;
+    touch-action: pan-y; user-select: none; cursor: grab;
+  }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--beige); color: var(--ground);
+    font-family: var(--f-display); font-size: 15px;
+  }
+  .pname { font-size: 13px; font-weight: 500; transition: opacity .18s; }
+  .dots { display: flex; gap: 4px; }
+  .dots i { width: 4px; height: 4px; border-radius: 50%; background: var(--beige-4); }
+  .dots i.cur { background: var(--beige); }
+  .ctls { display: flex; gap: 8px; }
+  .ctl {
+    width: 38px; height: 38px; border-radius: 50%;
+    border: 1px solid var(--beige-4);
+    display: grid; place-items: center; color: var(--beige-3);
+    transition: color .2s, border-color .2s;
+  }
+  .ctl[aria-pressed="true"] { color: var(--beige); border-color: var(--beige-3); }
+  .ctl svg { width: 16px; height: 16px; }
+
+  /* ---------- board ---------- */
+  .board { position: relative; margin-top: 22px; }
+  .traces { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+  .trace { fill: none; stroke: var(--beige); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; opacity: .85; }
+  .trace.bypass { stroke: var(--beige-4); stroke-dasharray: 3 5; opacity: 1; }
+  .trace.draw { transition: stroke-dashoffset .55s cubic-bezier(.4,0,.2,1); }
+  .flow { fill: none; stroke: var(--amber); stroke-width: 1.8; stroke-linecap: round; stroke-dasharray: 1.2 15; opacity: .75; animation: flow 1.6s linear infinite; }
+  @keyframes flow { to { stroke-dashoffset: -16.2; } }
+  .via { fill: var(--ground); stroke: var(--beige); stroke-width: 1.3; }
+  .bypass-label { font-family: var(--f-display); font-size: 10px; letter-spacing: .18em; fill: var(--beige-3); }
+
+  .device {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 16px 8px 8px;
+    border: 1.5px solid var(--beige); border-radius: 999px;
+    background: var(--panel);
+    touch-action: pan-y; user-select: none; cursor: grab;
+  }
+  .device.bypassed { border-color: var(--beige-3); }
+  .device-inner { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; transition: transform .25s ease, opacity .2s; }
+  .art { display: flex; align-items: center; flex: none; height: 54px; padding: 0 8px; border-radius: 999px; background: var(--panel-2); }
+  .art svg { width: 38px; height: 38px; stroke: var(--beige); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  .art .joint { width: 14px; height: 38px; }
+  .art .joint path { stroke: var(--beige-3); stroke-width: 1.2; }
+  .dmeta { min-width: 0; display: grid; gap: 3px; }
+  .dname { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dsub { font-family: var(--f-mono); font-size: 10.5px; color: var(--beige-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ddots { display: flex; gap: 4px; margin-top: 3px; }
+  .ddots i { width: 12px; height: 2px; border-radius: 2px; background: var(--beige-4); }
+  .ddots i.cur { background: var(--beige); }
+
+  .rows { display: flex; flex-direction: column; gap: 22px; margin-top: 30px; }
+  .group { position: relative; display: flex; flex-direction: column; gap: 16px; }
+  .line { display: flex; justify-content: flex-start; gap: 16px; padding-inline: 22px; }
+  .line.solo { justify-content: center; }
+  .stage {
+    position: absolute; left: 0; top: 50%;
+    transform: translateY(-50%) rotate(180deg);
+    writing-mode: vertical-rl;
+    font-family: var(--f-display); font-size: 10px; letter-spacing: .22em; text-transform: uppercase;
+    color: var(--beige-3); white-space: nowrap;
+  }
+  .fx {
+    position: relative; z-index: 1;
+    flex: 0 0 calc(50% - 8px); min-width: 0;
+    display: flex; align-items: center;
+    height: 46px; border-radius: 999px;
+    border: 1.5px dashed var(--beige-3);
+    background: var(--ground);
+    color: var(--beige-2);
+    transition: border-color .25s, color .25s, background-color .25s, opacity .25s;
+  }
+  .fx.on { border-style: solid; border-color: var(--beige); color: var(--beige); background: #13120F; }
+  .fx.dead { opacity: .45; }
+  .led { flex: none; width: 34px; height: 100%; display: grid; place-items: center; border-radius: 999px 0 0 999px; }
+  .led::after {
+    content: ""; width: 9px; height: 9px; border-radius: 50%;
+    border: 1.4px solid var(--beige-3);
+    transition: background-color .25s, border-color .25s, box-shadow .25s;
+  }
+  .fx.on .led::after { background: var(--beige); border-color: var(--beige); box-shadow: 0 0 8px rgba(226,162,78,.35); }
+  .fxbody { flex: 1; min-width: 0; height: 100%; text-align: left; display: grid; align-content: center; gap: 1px; padding-right: 12px; border-radius: 0 999px 999px 0; }
+  .fxn { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fxv { font-family: var(--f-mono); font-size: 10px; color: var(--beige-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fx.on .fxv { color: var(--beige-2); }
+
+  .terminal { display: flex; flex-direction: column; align-items: center; gap: 7px; margin-top: 30px; position: relative; z-index: 1; }
+  .tnode { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--beige); background: var(--ground); }
+  .tlabel { font-family: var(--f-display); font-size: 10px; letter-spacing: .22em; color: var(--beige-3); text-transform: uppercase; }
+
+  /* ---------- presets ---------- */
+  .dock-head { display: flex; justify-content: space-between; align-items: baseline; margin-top: 28px; }
+  .eyebrow { font-family: var(--f-display); font-size: 11px; letter-spacing: .22em; color: var(--beige-3); text-transform: uppercase; }
+  .mod { font-family: var(--f-mono); font-size: 10px; color: var(--amber); opacity: 0; transition: opacity .2s; }
+  .mod.show { opacity: .85; }
+  .dock {
+    display: flex; gap: 8px; margin-top: 10px; margin-inline: -16px;
+    overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;
+    padding: 2px calc(50% - 92px);
+  }
+  .dock::-webkit-scrollbar { display: none; }
+  .pcard {
+    flex: 0 0 184px; scroll-snap-align: center;
+    border: 1.5px dashed var(--beige-4); border-radius: 20px;
+    padding: 11px 16px; text-align: left;
+    color: var(--beige-3);
+    transition: border-color .2s, color .2s;
+  }
+  .pcard.cur { border-style: solid; border-color: var(--beige); color: var(--beige); }
+  .pcard b { display: block; font-size: 13px; font-weight: 600; }
+  .pcard span { display: block; margin-top: 2px; font-family: var(--f-mono); font-size: 9.5px; color: inherit; opacity: .75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dock.dead { opacity: .35; pointer-events: none; }
+
+  .hint { margin-top: 18px; text-align: center; font-family: var(--f-mono); font-size: 9.5px; color: var(--beige-3); line-height: 1.6; }
+  .hint button { color: var(--beige); text-decoration: underline; text-underline-offset: 3px; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px);
+    max-width: min(360px, calc(100% - 32px));
+    background: var(--beige); color: var(--ground);
+    font-size: 12.5px; font-weight: 500; padding: 10px 16px; border-radius: 999px;
+    opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 20;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* ---------- sheet ---------- */
+  .scrim { position: fixed; inset: 0; background: rgba(0,0,0,.62); z-index: 10; }
+  .sheet {
+    position: fixed; left: 50%; bottom: 0; transform: translateX(-50%);
+    width: min(400px, 100%); max-height: 86vh; overflow-y: auto;
+    background: var(--panel); border: 1px solid var(--beige-4); border-bottom: 0;
+    border-radius: 28px 28px 0 0;
+    padding: 10px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+    z-index: 11; animation: up .26s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes up { from { transform: translate(-50%, 40px); opacity: 0; } }
+  .grab { width: 38px; height: 4px; border-radius: 4px; background: var(--beige-4); margin: 0 auto 14px; }
+  .sh-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .sh-title { font-family: var(--f-display); font-size: 19px; letter-spacing: .06em; }
+  .sh-sub { font-family: var(--f-mono); font-size: 10px; color: var(--beige-2); margin-top: 6px; line-height: 1.5; }
+  .switch { flex: none; width: 50px; height: 28px; border-radius: 999px; border: 1.5px dashed var(--beige-3); position: relative; transition: border-color .2s; }
+  .switch::after { content: ""; position: absolute; top: 4px; left: 4px; width: 17px; height: 17px; border-radius: 50%; border: 1.4px solid var(--beige-3); transition: transform .22s, background-color .22s, border-color .22s; }
+  .switch[aria-pressed="true"] { border-style: solid; border-color: var(--beige); }
+  .switch[aria-pressed="true"]::after { transform: translateX(21px); background: var(--beige); border-color: var(--beige); }
+
+  .graph { margin-top: 16px; border: 1px solid var(--beige-4); border-radius: 16px; padding: 8px 6px 4px; background: var(--ground); }
+  .graph svg { display: block; width: 100%; height: auto; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-family: var(--f-mono); font-size: 9.5px; color: var(--beige-2); padding: 4px 8px 6px; }
+  .legend i { display: inline-block; width: 14px; height: 0; border-top: 1.6px solid var(--beige); vertical-align: middle; margin-right: 5px; }
+  .legend i.ghost { border-top: 1.2px dashed var(--beige-3); }
+
+  .sect { margin-top: 18px; }
+  .sect .eyebrow { display: block; margin-bottom: 8px; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--beige-4); border-radius: 999px; padding: 3px; }
+  .seg button { height: 32px; border-radius: 999px; font-size: 12px; color: var(--beige-2); }
+  .seg button[aria-pressed="true"] { background: var(--beige); color: var(--ground); font-weight: 600; }
+  .note { font-family: var(--f-mono); font-size: 9.5px; color: var(--beige-3); line-height: 1.6; margin-top: 8px; }
+
+  .ftable { display: grid; grid-template-columns: 22px 44px 1fr 1fr 1fr; gap: 6px 8px; font-family: var(--f-mono); font-size: 10.5px; font-variant-numeric: tabular-nums; }
+  .ftable .h { color: var(--beige-3); font-size: 9px; }
+  .ftable span { color: var(--beige-2); }
+  .ftable span.t { color: var(--beige); }
+  .src { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 10px; }
+  .src code { font-family: var(--f-mono); font-size: 9.5px; color: var(--beige-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .btn { flex: none; height: 32px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--beige-3); font-size: 12px; color: var(--beige); }
+  .btn.solid { background: var(--beige); color: var(--ground); border-color: var(--beige); font-weight: 600; }
+
+  .sl { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; align-items: center; margin-top: 16px; font-size: 12.5px; color: var(--beige-2); }
+  .sl output { font-family: var(--f-mono); font-size: 11px; color: var(--beige); font-variant-numeric: tabular-nums; }
+  .sl input { grid-column: 1 / -1; width: 100%; accent-color: var(--beige); }
+
+  .sh-foot { display: flex; justify-content: flex-end; margin-top: 22px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .flow { animation: none; }
+    .trace.draw { transition: none; }
+    .sheet { animation: none; }
+  }
+</style>
+
+<div class="phone" id="phone">
+  <header class="top">
+    <div class="profile" id="profile" tabindex="0" role="group" aria-label="User profile — swipe to switch">
+      <span class="avatar" id="avatar">A</span>
+      <span class="pname" id="pname">Adi</span>
+      <span class="dots" id="pdots"></span>
+    </div>
+    <div class="ctls">
+      <button class="ctl" id="play" aria-pressed="true" aria-label="Music playing (demo)" title="Music playing (demo)"></button>
+      <button class="ctl" id="power" aria-pressed="true" aria-label="All effects on" title="All effects on">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <section class="board" id="board">
+    <svg class="traces" id="traces" aria-hidden="true"></svg>
+    <div class="device" id="device" tabindex="0" role="group" aria-label="Output device — swipe to switch">
+      <div class="device-inner" id="deviceInner"></div>
+    </div>
+    <div class="rows" id="rows"></div>
+    <div class="terminal" id="terminal">
+      <span class="tnode" id="tnode"></span>
+      <span class="tlabel" id="tlabel">Out</span>
+    </div>
+  </section>
+
+  <div class="dock-head">
+    <span class="eyebrow" id="dockLabel">Presets</span>
+    <span class="mod" id="mod">● modified</span>
+  </div>
+  <nav class="dock" id="dock" aria-label="Presets — swipe to switch"></nav>
+
+  <p class="hint" id="hint">Dot connects an effect · tap a pill to edit<br>Swipe the device, presets and profile</p>
+
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+<div id="sheetHost"></div>
+
+<script>
+(() => {
+  /* ---------------- data ---------------- */
+  const SALNOTES = [
+    ["LSC", 105.0, -3.1, 0.70], ["PK", 61.9, 2.1, 1.05], ["PK", 175.4, -2.1, 1.05],
+    ["PK", 731.0, 1.1, 1.16], ["PK", 1220.4, -0.5, 2.23], ["PK", 2680.1, 2.2, 1.44],
+    ["PK", 4260.3, -1.3, 4.02], ["PK", 5957.1, 2.5, 4.64], ["PK", 8867.9, -2.3, 1.80],
+    ["HSC", 10000.0, 0.2, 0.70]
+  ].map(([t, f, g, q]) => ({ t, f, g, q }));
+
+  const ART = {
+    dac: '<svg viewBox="0 0 40 40"><rect x="13" y="9" width="14" height="22" rx="4"/><path d="M17 9V5h6v4"/><circle cx="20" cy="15" r="1.3"/><path d="M20 31v6"/></svg>',
+    iem: '<svg viewBox="0 0 40 40"><path d="M10 23c0-7 5-12 12-12 5 0 8 3 8 7 0 6-6 11-13 11-4 0-7-2-7-6z"/><path d="M27 13l5-5"/><path d="M13 28c-2 3-2 6 0 9"/></svg>',
+    overear: '<svg viewBox="0 0 40 40"><path d="M8 25v-5a12 12 0 0 1 24 0v5"/><rect x="5" y="22" width="8" height="13" rx="3"/><rect x="27" y="22" width="8" height="13" rx="3"/></svg>',
+    buds: '<svg viewBox="0 0 40 40"><circle cx="13" cy="16" r="6"/><path d="M13 22v12"/><circle cx="27" cy="16" r="6"/><path d="M27 22v12"/></svg>',
+    wired: '<svg viewBox="0 0 40 40"><path d="M9 20c0-6 4-10 10-10 4 0 7 2 7 6 0 5-5 9-11 9-4 0-6-2-6-5z"/><path d="M15 25c1 4 4 6 8 6h6"/><rect x="29" y="28" width="7" height="6" rx="1.5"/></svg>',
+    speaker: '<svg viewBox="0 0 40 40"><rect x="12" y="4" width="16" height="32" rx="4"/><path d="M17 29h6M17 32h6"/></svg>',
+    monitors: '<svg viewBox="0 0 40 40"><rect x="5" y="8" width="12" height="24" rx="2"/><circle cx="11" cy="24" r="4"/><circle cx="11" cy="13" r="1.8"/><rect x="23" y="8" width="12" height="24" rx="2"/><circle cx="29" cy="24" r="4"/><circle cx="29" cy="13" r="1.8"/></svg>'
+  };
+
+  const PROFILES = [
+    { name: "Adi", initial: "A",
+      setups: [
+        { name: "Salnotes Zero 2", sub: "USB-C DAC · 24-bit / 96 kHz", art: ["dac", "iem"], out: "USB DAC", kind: "IE 2019", file: true },
+        { name: "HD 560S", sub: "USB-C DAC · 24-bit / 96 kHz", art: ["dac", "overear"], out: "USB DAC", kind: "OE 2018" },
+        { name: "Wireless buds", sub: "Bluetooth · AAC", art: ["buds"], out: "Bluetooth", kind: "IE 2019" },
+        { name: "Phone speaker", sub: "Built-in · effects off", art: ["speaker"], out: "Speaker", bypass: true }
+      ],
+      presets: [
+        { name: "AutoEQ · Harman", sub: s => `${s.name} → Harman ${s.kind || ""}`, on: ["preamp", "peq", "limiter"] },
+        { name: "Late night", sub: () => "Comp first · loudness · warm tilt", on: ["preamp", "comp", "peq", "tilt", "loud", "limiter"], eqPost: true,
+          params: { tilt: { t: -0.6 }, comp: { thr: -24, ratio: 3 } } },
+        { name: "Bass head", sub: () => "Sub-bass shelf +6 dB", on: ["preamp", "peq", "bass", "limiter"], params: { bass: { gain: 6, freq: 90 }, preamp: { gain: -6 } } },
+        { name: "Wide stage", sub: () => "Virtualizer · small room", on: ["preamp", "peq", "virt", "reverb", "limiter"] },
+        { name: "Flat", sub: () => "Everything disconnected", on: [] }
+      ] },
+    { name: "Guest", initial: "G",
+      setups: [
+        { name: "Wired earphones", sub: "3.5 mm jack · 24-bit / 48 kHz", art: ["wired"], out: "Headphone jack", kind: "IE 2019" },
+        { name: "Phone speaker", sub: "Built-in · effects off", art: ["speaker"], out: "Speaker", bypass: true }
+      ],
+      presets: [
+        { name: "Warm", sub: () => "Tilt −0.8 dB/oct", on: ["preamp", "tilt", "limiter"], params: { tilt: { t: -0.8 } } },
+        { name: "V-shape", sub: () => "Bass + treble lift", on: ["preamp", "bass", "tilt", "limiter"], params: { tilt: { t: 0.6 }, bass: { gain: 5 } } },
+        { name: "Flat", sub: () => "Everything disconnected", on: [] }
+      ] },
+    { name: "Studio", initial: "S",
+      setups: [
+        { name: "HD 560S", sub: "USB-C DAC · 24-bit / 96 kHz", art: ["dac", "overear"], out: "USB DAC", kind: "OE 2018" },
+        { name: "Desk monitors", sub: "USB interface · 24-bit / 48 kHz", art: ["dac", "monitors"], out: "USB interface", kind: "" }
+      ],
+      presets: [
+        { name: "Reference", sub: s => `${s.name} → diffuse field`, on: ["preamp", "peq", "limiter"] },
+        { name: "Mono check", sub: () => "Balance centre · limiter", on: ["preamp", "balance", "limiter"] }
+      ] }
+  ];
+
+  const STAGES = { input: "Input", tone: "Tone", dyn: "Dynamics", lim: "Limit", space: "Space" };
+  const ROWS = { input: ["preamp", "balance"], tone: ["peq", "bass", "tilt", "loud"], dyn: ["comp", "mbc", "gate"], lim: ["limiter"], space: ["virt", "reverb"] };
+  const sgn = (v, d = 1) => (v > 0 ? "+" : v < 0 ? "−" : "±") + Math.abs(v).toFixed(d);
+
+  const EFFECTS = {
+    preamp:  { name: "Preamp", stage: "input", desc: "Input gain · keeps boosts from clipping",
+               params: [{ k: "gain", label: "Gain", min: -12, max: 6, step: 0.1, v: -2.2, unit: "dB" }], fmt: p => `${sgn(p.gain)} dB` },
+    balance: { name: "Balance", stage: "input", desc: "Per-channel input gain",
+               params: [{ k: "bal", label: "Left ↔ Right", min: -100, max: 100, step: 1, v: 0, unit: "" }],
+               fmt: p => (p.bal === 0 ? "Centre" : p.bal < 0 ? `L ${-p.bal}` : `R ${p.bal}`) },
+    peq:     { name: "Parametric EQ", stage: "tone", desc: "Pre-EQ slot · converted to Android EQ bands", fmt: () => `${FILTERS.length} filters` },
+    bass:    { name: "Bass", stage: "tone", desc: "Low shelf, summed into the tone curve",
+               params: [{ k: "gain", label: "Shelf gain", min: -6, max: 10, step: 0.5, v: 2, unit: "dB" }, { k: "freq", label: "Below", min: 40, max: 200, step: 5, v: 105, unit: "Hz" }],
+               fmt: p => `${sgn(p.gain)} dB` },
+    tilt:    { name: "Tilt", stage: "tone", desc: "Warm ↔ bright around 1 kHz",
+               params: [{ k: "t", label: "Slope", min: -2, max: 2, step: 0.1, v: -0.4, unit: "dB/oct" }], fmt: p => `${sgn(p.t)}/oct` },
+    loud:    { name: "Loudness", stage: "tone", desc: "Equal-loudness lift for quiet listening",
+               params: [{ k: "amt", label: "Amount", min: 0, max: 100, step: 1, v: 50, unit: "%" }], fmt: p => `${p.amt}%` },
+    comp:    { name: "Compressor", stage: "dyn", desc: "Single band · Android multiband engine",
+               params: [{ k: "thr", label: "Threshold", min: -60, max: 0, step: 1, v: -18, unit: "dB" }, { k: "ratio", label: "Ratio", min: 1, max: 10, step: 0.1, v: 2.5, unit: ":1" },
+                        { k: "atk", label: "Attack", min: 1, max: 100, step: 1, v: 10, unit: "ms" }, { k: "rel", label: "Release", min: 20, max: 1000, step: 10, v: 200, unit: "ms" }],
+               fmt: p => `${p.ratio.toFixed(1)}:1` },
+    mbc:     { name: "Multiband", stage: "dyn", desc: "Split compression across bands",
+               params: [{ k: "bands", label: "Bands", min: 2, max: 5, step: 1, v: 3, unit: "" }, { k: "amt", label: "Amount", min: 0, max: 100, step: 1, v: 40, unit: "%" }],
+               fmt: p => `${p.bands} bands` },
+    gate:    { name: "Gate", stage: "dyn", desc: "Noise gate / expander",
+               params: [{ k: "thr", label: "Threshold", min: -90, max: -30, step: 1, v: -70, unit: "dB" }], fmt: p => `${p.thr} dB` },
+    limiter: { name: "Limiter", stage: "lim", desc: "Always last · catches peaks",
+               params: [{ k: "ceil", label: "Ceiling", min: -3, max: 0, step: 0.1, v: -0.3, unit: "dBFS" }], fmt: p => `${p.ceil.toFixed(1)} dBFS` },
+    virt:    { name: "Virtualizer", stage: "space", desc: "Android effect · availability depends on phone",
+               params: [{ k: "str", label: "Strength", min: 0, max: 100, step: 1, v: 35, unit: "%" }], fmt: p => `${p.str}%` },
+    reverb:  { name: "Reverb", stage: "space", desc: "Android preset reverb",
+               params: [{ k: "mix", label: "Mix", min: 0, max: 100, step: 1, v: 15, unit: "%" }], fmt: p => `Small room · ${p.mix}%` }
+  };
+
+  let FILTERS = SALNOTES.slice();
+  let filterSource = "7Hz Salnotes Zero 2 ParametricEq.txt";
+
+  /* ---------------- state ---------------- */
+  const S = { profile: 0, setup: [0, 0, 0], power: true, playing: true, chains: {}, bypassOverride: {} };
+  const prof = () => PROFILES[S.profile];
+  const setup = () => prof().setups[S.setup[S.profile]];
+  const key = () => `${S.profile}|${S.setup[S.profile]}`;
+  const live = () => S.power && !(setup().bypass && !S.bypassOverride[key()]);
+
+  function fromPreset(i) {
+    const P = prof().presets[i];
+    const params = {};
+    for (const [id, e] of Object.entries(EFFECTS)) {
+      params[id] = {};
+      for (const p of e.params || []) params[id][p.k] = p.v;
+      Object.assign(params[id], (P.params || {})[id] || {});
+    }
+    return { preset: i, on: new Set(P.on), params, eqPost: !!P.eqPost, dirty: false };
+  }
+  function chain() {
+    if (!S.chains[key()]) S.chains[key()] = fromPreset(0);
+    return S.chains[key()];
+  }
+
+  /* ---------------- dsp (RBJ biquads, 48 kHz) ---------------- */
+  const FS = 48000;
+  function biquad(t, f0, g, Q) {
+    const A = Math.pow(10, g / 40), w = 2 * Math.PI * f0 / FS, c = Math.cos(w), s = Math.sin(w), al = s / (2 * Q);
+    const sq = 2 * Math.sqrt(A) * al;
+    switch (t) {
+      case "PK": return { b: [1 + al * A, -2 * c, 1 - al * A], a: [1 + al / A, -2 * c, 1 - al / A] };
+      case "LSC": case "LS": return { b: [A * ((A + 1) - (A - 1) * c + sq), 2 * A * ((A - 1) - (A + 1) * c), A * ((A + 1) - (A - 1) * c - sq)], a: [(A + 1) + (A - 1) * c + sq, -2 * ((A - 1) + (A + 1) * c), (A + 1) + (A - 1) * c - sq] };
+      case "HSC": case "HS": return { b: [A * ((A + 1) + (A - 1) * c + sq), -2 * A * ((A - 1) + (A + 1) * c), A * ((A + 1) + (A - 1) * c - sq)], a: [(A + 1) - (A - 1) * c + sq, 2 * ((A - 1) - (A + 1) * c), (A + 1) - (A - 1) * c - sq] };
+      case "LP": return { b: [(1 - c) / 2, 1 - c, (1 - c) / 2], a: [1 + al, -2 * c, 1 - al] };
+      case "HP": return { b: [(1 + c) / 2, -(1 + c), (1 + c) / 2], a: [1 + al, -2 * c, 1 - al] };
+    }
+    return { b: [1, 0, 0], a: [1, 0, 0] };
+  }
+  function magDb(bq, f) {
+    const w = 2 * Math.PI * f / FS, c1 = Math.cos(w), s1 = -Math.sin(w), c2 = Math.cos(2 * w), s2 = -Math.sin(2 * w);
+    const { b, a } = bq;
+    const nr = b[0] + b[1] * c1 + b[2] * c2, ni = b[1] * s1 + b[2] * s2;
+    const dr = a[0] + a[1] * c1 + a[2] * c2, di = a[1] * s1 + a[2] * s2;
+    return 10 * Math.log10((nr * nr + ni * ni) / (dr * dr + di * di));
+  }
+  function toneParts(ch) {
+    const parts = [];
+    const peq = ch.on.has("peq") ? FILTERS.map(F => biquad(F.t, F.f, F.g, F.q)) : [];
+    if (ch.on.has("bass")) parts.push(biquad("LSC", ch.params.bass.freq, ch.params.bass.gain, 0.7));
+    if (ch.on.has("loud")) { const a = ch.params.loud.amt / 100; parts.push(biquad("LSC", 90, 6 * a, 0.7), biquad("HSC", 9000, 3 * a, 0.7)); }
+    return { peq, extra: parts, tilt: ch.on.has("tilt") ? ch.params.tilt.t : 0 };
+  }
+  const sumAt = (list, f) => list.reduce((s, bq) => s + magDb(bq, f), 0);
+
+  /* ---------------- dom ---------------- */
+  const $ = id => document.getElementById(id);
+  const board = $("board"), svg = $("traces"), rowsEl = $("rows"), dock = $("dock"), deviceEl = $("device");
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let drawn = new Set();
+
+  function renderTop() {
+    $("avatar").textContent = prof().initial;
+    $("pname").textContent = prof().name;
+    $("pdots").innerHTML = PROFILES.map((_, i) => `<i class="${i === S.profile ? "cur" : ""}"></i>`).join("");
+    const play = $("play");
+    play.setAttribute("aria-pressed", S.playing);
+    play.innerHTML = S.playing
+      ? '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+    $("power").setAttribute("aria-pressed", S.power);
+  }
+
+  function renderDevice() {
+    const s = setup(), n = prof().setups.length, cur = S.setup[S.profile];
+    const joint = '<svg class="joint" viewBox="0 0 14 38"><path d="M0 19h14"/></svg>';
+    $("deviceInner").innerHTML = `
+      <div class="art">${s.art.map(a => ART[a]).join(joint)}</div>
+      <div class="dmeta">
+        <div class="dname">${s.name}</div>
+        <div class="dsub">${s.sub}</div>
+        <div class="ddots">${Array.from({ length: n }, (_, i) => `<i class="${i === cur ? "cur" : ""}"></i>`).join("")}</div>
+      </div>`;
+    deviceEl.classList.toggle("bypassed", !live());
+  }
+
+  function buildRows() {
+    const ch = chain();
+    const order = ch.eqPost ? ["input", "dyn", "tone", "lim", "space"] : ["input", "tone", "dyn", "lim", "space"];
+    const pill = id => {
+      const e = EFFECTS[id];
+      return `<div class="fx" data-id="${id}">
+        <button class="led" data-led="${id}" aria-label="Connect ${e.name}" aria-pressed="false"></button>
+        <button class="fxbody" data-open="${id}" aria-label="Edit ${e.name}"><span class="fxn">${e.name}</span><span class="fxv"></span></button>
+      </div>`;
+    };
+    rowsEl.innerHTML = order.map(r => {
+      const ids = ROWS[r], lines = [];
+      for (let i = 0; i < ids.length; i += 2) lines.push(ids.slice(i, i + 2));
+      return `<div class="group">
+        <span class="stage">${r === "tone" && ch.eqPost ? "Tone · post" : STAGES[r]}</span>
+        ${lines.map((l, i) => `<div class="line${l.length === 1 ? " solo" : ""}" data-row="${r}-${i}">${l.map(pill).join("")}</div>`).join("")}
+      </div>`;
+    }).join("");
+  }
+
+  function refreshPills() {
+    const ch = chain(), L = live();
+    rowsEl.querySelectorAll(".fx").forEach(el => {
+      const id = el.dataset.id, on = ch.on.has(id);
+      el.classList.toggle("on", on && L);
+      el.classList.toggle("dead", !L);
+      el.querySelector(".led").setAttribute("aria-pressed", on);
+      el.querySelector(".fxv").textContent = EFFECTS[id].fmt(ch.params[id]);
+    });
+    $("mod").classList.toggle("show", ch.dirty);
+    const s = setup();
+    $("tlabel").textContent = L ? `Out → ${s.out}` : `Out → ${s.out} · bypass`;
+  }
+
+  function renderDock() {
+    const ch = chain(), s = setup();
+    dock.innerHTML = prof().presets.map((p, i) => `<button class="pcard${i === ch.preset ? " cur" : ""}" data-preset="${i}"><b>${p.name}</b><span>${p.sub(s)}</span></button>`).join("");
+    $("dockLabel").textContent = `Presets · ${prof().name}`;
+    dock.classList.toggle("dead", !live());
+    centerCard(ch.preset, false);
+    const hint = $("hint");
+    if (!live() && S.power) {
+      hint.innerHTML = `${s.name} is bypassed — audio is untouched.<br><button id="enableHere">Turn effects on for this output</button>`;
+      $("enableHere").onclick = () => { S.bypassOverride[key()] = true; all(); };
+    } else if (!S.power) {
+      hint.innerHTML = "All effects are off.<br>Tap the power button to reconnect the chain.";
+    } else {
+      hint.innerHTML = "Dot connects an effect · tap a pill to edit<br>Swipe the device, presets and profile";
+    }
+  }
+  function centerCard(i, smooth) {
+    const card = dock.children[i];
+    if (!card) return;
+    const left = card.offsetLeft - (dock.clientWidth - card.offsetWidth) / 2;
+    dock.scrollTo({ left, behavior: smooth && !reduce ? "smooth" : "auto" });
+  }
+
+  /* ---------------- traces ---------------- */
+  function chamfer(pts, r = 7) {
+    let d = `M${pts[0].x} ${pts[0].y}`;
+    for (let i = 1; i < pts.length - 1; i++) {
+      const a = pts[i - 1], p = pts[i], b = pts[i + 1];
+      const l1 = Math.hypot(p.x - a.x, p.y - a.y), l2 = Math.hypot(b.x - p.x, b.y - p.y);
+      if (l1 < 0.5 || l2 < 0.5) continue;
+      const rr = Math.min(r, l1 / 2, l2 / 2);
+      d += ` L${p.x - (p.x - a.x) / l1 * rr} ${p.y - (p.y - a.y) / l1 * rr} L${p.x + (b.x - p.x) / l2 * rr} ${p.y + (b.y - p.y) / l2 * rr}`;
+    }
+    const z = pts[pts.length - 1];
+    return d + ` L${z.x} ${z.y}`;
+  }
+
+  function draw() {
+    const B = board.getBoundingClientRect(), W = B.width, H = B.height;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.setAttribute("width", W); svg.setAttribute("height", H);
+    const rel = el => { const r = el.getBoundingClientRect(); return { t: r.top - B.top, b: r.bottom - B.top, cx: (r.left + r.right) / 2 - B.left }; };
+    const dev = rel(deviceEl), T = rel($("tnode")), cx = dev.cx, railX = W - 5;
+    const segs = [], vias = [];
+    let label = "";
+
+    if (!live()) {
+      const y1 = dev.b + 14, y2 = T.t - 14;
+      segs.push({ id: "bypass", cls: "bypass", d: chamfer([{ x: cx, y: dev.b }, { x: cx, y: y1 }, { x: railX, y: y1 }, { x: railX, y: y2 }, { x: cx, y: y2 }, { x: cx, y: T.t }], 8) });
+      label = `<text class="bypass-label" x="${railX - 6}" y="${(y1 + y2) / 2}" text-anchor="middle" transform="rotate(-90 ${railX - 6} ${(y1 + y2) / 2})">BYPASS</text>`;
+    } else {
+      // Series chain: each connected pill wires straight to the next one (left → right, then down).
+      // Skipped lines are crossed through the centre gutter between the two pill columns.
+      const ch = chain(), lines = [...rowsEl.querySelectorAll(".line")];
+      const nodes = [{ id: "dev", line: -1, x: cx, b: dev.b }];
+      lines.forEach((ln, li) => ln.querySelectorAll(".fx").forEach(p => {
+        if (!ch.on.has(p.dataset.id)) return;
+        const r = p.getBoundingClientRect();
+        nodes.push({ id: p.dataset.id, line: li, x: (r.left + r.right) / 2 - B.left, t: r.top - B.top, b: r.bottom - B.top,
+                     l: r.left - B.left, r: r.right - B.left, cy: (r.top + r.bottom) / 2 - B.top });
+      }));
+      nodes.push({ id: "out", line: lines.length, x: cx, t: T.t });
+      // y in the middle of the gap above line i (i === lines.length → the gap above the OUT node)
+      const lineBox = lines.map(ln => { const r = ln.getBoundingClientRect(); return { t: r.top - B.top, b: r.bottom - B.top }; });
+      const gapAbove = i => {
+        const top = i < lines.length ? lineBox[i].t : T.t;
+        const prevB = i === 0 ? dev.b : lineBox[i - 1].b;
+        return (prevB + top) / 2;
+      };
+      for (let i = 1; i < nodes.length; i++) {
+        const a = nodes[i - 1], b = nodes[i];
+        let pts;
+        if (a.line === b.line) {
+          pts = [{ x: a.r, y: a.cy }, { x: b.l, y: b.cy }];
+        } else {
+          // Run straight down a column (behind any switched-off pills), changing column in one gap only:
+          // from the device, turn in the first gap; otherwise turn in the gap just above the target.
+          const y = gapAbove(a.id === "dev" ? 0 : b.line);
+          pts = [{ x: a.x, y: a.b }, { x: a.x, y }, { x: b.x, y }, { x: b.x, y: b.t }];
+        }
+        segs.push({ id: `${a.id}>${b.id}`, d: chamfer(pts, 6) });
+      }
+    }
+
+    const flow = S.playing && live() && !reduce;
+    svg.innerHTML =
+      segs.map(s => `<path class="trace ${s.cls || ""}" data-id="${s.id}" d="${s.d}"/>`).join("") +
+      (flow ? segs.map(s => `<path class="flow" d="${s.d}"/>`).join("") : "") +
+      vias.map(v => `<circle class="via" cx="${v.x}" cy="${v.y}" r="2.6"/>`).join("") + label;
+
+    const now = new Set(segs.map(s => s.id));
+    if (!reduce) {
+      svg.querySelectorAll(".trace").forEach(path => {
+        if (drawn.has(path.dataset.id) || path.classList.contains("bypass")) return;
+        const len = path.getTotalLength();
+        path.style.strokeDasharray = len; path.style.strokeDashoffset = len;
+        path.getBoundingClientRect();
+        path.classList.add("draw");
+        path.style.strokeDashoffset = 0;
+      });
+    }
+    drawn = now;
+  }
+
+  function all() { renderTop(); renderDevice(); buildRows(); refreshPills(); renderDock(); requestAnimationFrame(draw); }
+  function soft() { refreshPills(); requestAnimationFrame(draw); }
+
+  /* ---------------- interactions ---------------- */
+  rowsEl.addEventListener("click", e => {
+    const led = e.target.closest("[data-led]"), body = e.target.closest("[data-open]");
+    if (!live()) { toast(S.power ? `${setup().name} is bypassed — turn effects on below` : "Power is off"); return; }
+    if (led) { toggleFx(led.dataset.led); }
+    else if (body) openSheet(body.dataset.open);
+  });
+  function toggleFx(id) {
+    const ch = chain();
+    ch.on.has(id) ? ch.on.delete(id) : ch.on.add(id);
+    ch.dirty = true;
+    soft();
+  }
+
+  function swipe(el, onStep, inner) {
+    let x0 = null, dx = 0, pid = null;
+    el.addEventListener("pointerdown", e => { x0 = e.clientX; dx = 0; pid = e.pointerId; });
+    el.addEventListener("pointermove", e => {
+      if (x0 === null || e.pointerId !== pid) return;
+      dx = e.clientX - x0;
+      if (Math.abs(dx) > 6 && !el.hasPointerCapture(pid)) el.setPointerCapture(pid);
+      if (inner) { inner.style.transition = "none"; inner.style.transform = `translateX(${dx * 0.35}px)`; inner.style.opacity = 1 - Math.min(Math.abs(dx) / 260, .5); }
+    });
+    const end = () => {
+      if (x0 === null) return;
+      if (inner) { inner.style.transition = ""; inner.style.transform = ""; inner.style.opacity = ""; }
+      if (dx < -44) onStep(1); else if (dx > 44) onStep(-1);
+      x0 = null;
+    };
+    el.addEventListener("pointerup", end);
+    el.addEventListener("pointercancel", end);
+    el.addEventListener("keydown", e => { if (e.key === "ArrowRight") onStep(1); if (e.key === "ArrowLeft") onStep(-1); });
+  }
+  const wrap = (i, n) => (i + n) % n;
+
+  swipe(deviceEl, d => {
+    const n = prof().setups.length;
+    S.setup[S.profile] = wrap(S.setup[S.profile] + d, n);
+    drawn = new Set();
+    all();
+    toast(`Output → ${setup().name}`);
+  }, $("deviceInner"));
+
+  swipe($("profile"), d => {
+    S.profile = wrap(S.profile + d, PROFILES.length);
+    drawn = new Set();
+    all();
+    toast(`Profile → ${prof().name}`);
+  }, $("pname"));
+
+  let st;
+  dock.addEventListener("scroll", () => {
+    clearTimeout(st);
+    st = setTimeout(() => {
+      const mid = dock.scrollLeft + dock.clientWidth / 2;
+      let best = 0, bd = Infinity;
+      [...dock.children].forEach((c, i) => { const d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid); if (d < bd) { bd = d; best = i; } });
+      if (best !== chain().preset) applyPreset(best);
+    }, 120);
+  });
+  dock.addEventListener("click", e => {
+    const c = e.target.closest("[data-preset]");
+    if (c) centerCard(+c.dataset.preset, true);
+  });
+  function applyPreset(i) {
+    S.chains[key()] = fromPreset(i);
+    [...dock.children].forEach((c, j) => c.classList.toggle("cur", j === i));
+    buildRows(); refreshPills(); requestAnimationFrame(draw);
+  }
+
+  $("play").onclick = () => { S.playing = !S.playing; renderTop(); draw(); };
+  $("power").onclick = () => { S.power = !S.power; drawn = new Set(); all(); toast(S.power ? "Effects on" : "All effects off — bypass"); };
+
+  let tt;
+  function toast(msg) {
+    const t = $("toast");
+    t.textContent = msg; t.classList.add("show");
+    clearTimeout(tt); tt = setTimeout(() => t.classList.remove("show"), 1600);
+  }
+
+  /* ---------------- sheet ---------------- */
+  const host = $("sheetHost");
+  function closeSheet() { host.innerHTML = ""; }
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeSheet(); });
+
+  function graphSvg() {
+    const ch = chain(), parts = toneParts(ch);
+    const Wd = 340, Hd = 150, padL = 26, padR = 6, padT = 8, padB = 18, R = 8;
+    const fx = f => padL + (Math.log10(f) - Math.log10(20)) / 3 * (Wd - padL - padR);
+    const fy = db => padT + (R - Math.max(-R, Math.min(R, db))) / (2 * R) * (Hd - padT - padB);
+    const N = 220, freqs = Array.from({ length: N }, (_, i) => 20 * Math.pow(1000, i / (N - 1)));
+    const peqLine = freqs.map(f => sumAt(parts.peq, f));
+    const total = freqs.map((f, i) => peqLine[i] + sumAt(parts.extra, f) + parts.tilt * Math.log2(f / 1000));
+    const path = arr => arr.map((v, i) => `${i ? "L" : "M"}${fx(freqs[i]).toFixed(1)} ${fy(v).toFixed(1)}`).join("");
+    let g = "";
+    for (const db of [-8, -4, 0, 4, 8]) g += `<line x1="${padL}" x2="${Wd - padR}" y1="${fy(db)}" y2="${fy(db)}" stroke="${db === 0 ? "#6B6455" : "#2B2823"}" stroke-width="1"/><text x="${padL - 4}" y="${fy(db) + 3}" text-anchor="end" font-size="7.5" fill="#6B6455" font-family="IBM Plex Mono, monospace">${db > 0 ? "+" + db : db}</text>`;
+    for (const [f, l] of [[20, "20"], [100, "100"], [1000, "1k"], [10000, "10k"], [20000, "20k"]]) g += `<line x1="${fx(f)}" x2="${fx(f)}" y1="${padT}" y2="${Hd - padB}" stroke="#2B2823" stroke-width="1"/><text x="${fx(f)}" y="${Hd - 5}" text-anchor="middle" font-size="7.5" fill="#6B6455" font-family="IBM Plex Mono, monospace">${l}</text>`;
+    const nodes = ch.on.has("peq") ? FILTERS.map(F => `<circle cx="${fx(F.f).toFixed(1)}" cy="${fy(sumAt(parts.peq, F.f)).toFixed(1)}" r="3" fill="#0A0A09" stroke="#D8CBAF" stroke-width="1.2"/>`).join("") : "";
+    return `<svg viewBox="0 0 ${Wd} ${Hd}" role="img" aria-label="Tone stage frequency response, 20 Hz to 20 kHz">${g}
+      ${ch.on.has("peq") ? `<path d="${path(peqLine)}" fill="none" stroke="#6B6455" stroke-width="1.2" stroke-dasharray="3 3"/>` : ""}
+      <path d="${path(total)}" fill="none" stroke="#D8CBAF" stroke-width="1.8" stroke-linejoin="round"/>${nodes}</svg>`;
+  }
+
+  function fmtParam(p, v) { return p.unit === ":1" ? `${(+v).toFixed(1)}:1` : `${p.step < 1 ? (+v).toFixed(1) : v}${p.unit ? " " + p.unit : ""}`; }
+
+  function openSheet(id) {
+    const e = EFFECTS[id], ch = chain(), isTone = e.stage === "tone";
+    const on = ch.on.has(id);
+    let body = "";
+    if (isTone) {
+      body += `<div class="graph" id="graph">${graphSvg()}</div>
+        <div class="legend"><span><i></i>Tone stage (summed)</span>${ch.on.has("peq") ? '<span><i class="ghost"></i>Parametric EQ only</span>' : ""}</div>`;
+    }
+    if (id === "peq") {
+      body += `
+        <div class="sect"><span class="eyebrow">Filters · ${FILTERS.length}</span>
+          <div class="ftable"><span class="h">#</span><span class="h">TYPE</span><span class="h">FREQ</span><span class="h">GAIN</span><span class="h">Q</span>
+          ${FILTERS.map((F, i) => `<span>${i + 1}</span><span class="t">${F.t}</span><span>${F.f >= 1000 ? (F.f / 1000).toFixed(2) + "k" : F.f.toFixed(1)}</span><span>${sgn(F.g)}</span><span>${F.q.toFixed(2)}</span>`).join("")}
+          </div>
+          <div class="src"><code>${setup().file ? filterSource : "Example filters (mockup)"}</code>
+            <label class="btn" for="imp" style="display:grid;place-items:center;cursor:pointer">Import .txt</label>
+            <input id="imp" type="file" accept=".txt,text/plain" hidden>
+          </div>
+        </div>
+        <div class="sect"><span class="eyebrow">Position in chain</span>
+          <div class="seg"><button data-pos="pre" aria-pressed="${!ch.eqPost}">Before compressor</button><button data-pos="post" aria-pressed="${ch.eqPost}">After compressor</button></div>
+          <p class="note">Android's effect engine has two EQ slots, before and after dynamics. Input stays first and the limiter stays last, so the chain only offers orders it can really play.</p>
+        </div>`;
+    } else {
+      body += (e.params || []).map(p => `
+        <label class="sl" for="p-${id}-${p.k}"><span>${p.label}</span><output id="o-${id}-${p.k}">${fmtParam(p, ch.params[id][p.k])}</output>
+          <input type="range" id="p-${id}-${p.k}" data-k="${p.k}" min="${p.min}" max="${p.max}" step="${p.step}" value="${ch.params[id][p.k]}"></label>`).join("");
+    }
+    host.innerHTML = `
+      <div class="scrim" id="scrim"></div>
+      <div class="sheet" role="dialog" aria-modal="true" aria-label="${e.name}">
+        <div class="grab"></div>
+        <div class="sh-head">
+          <div><div class="sh-title">${e.name}</div><div class="sh-sub">${e.desc}</div></div>
+          <button class="switch" id="sw" aria-pressed="${on}" aria-label="Connect ${e.name}"></button>
+        </div>
+        ${body}
+        <div class="sh-foot"><button class="btn solid" id="done">Done</button></div>
+      </div>`;
+    $("scrim").onclick = closeSheet;
+    $("done").onclick = closeSheet;
+    $("sw").onclick = ev => {
+      toggleFx(id);
+      ev.currentTarget.setAttribute("aria-pressed", chain().on.has(id));
+      if (isTone) redrawGraph(id);
+    };
+    host.querySelectorAll("input[type=range]").forEach(inp => inp.addEventListener("input", () => {
+      const p = e.params.find(x => x.k === inp.dataset.k);
+      ch.params[id][p.k] = +inp.value; ch.dirty = true;
+      $(`o-${id}-${p.k}`).textContent = fmtParam(p, inp.value);
+      refreshPills();
+      if (isTone) redrawGraph(id);
+    }));
+    host.querySelectorAll("[data-pos]").forEach(b => b.onclick = () => {
+      ch.eqPost = b.dataset.pos === "post"; ch.dirty = true;
+      host.querySelectorAll("[data-pos]").forEach(x => x.setAttribute("aria-pressed", x === b));
+      drawn = new Set([...drawn].filter(k => !k.startsWith("trunk")));
+      buildRows(); refreshPills(); requestAnimationFrame(draw);
+    });
+    const imp = $("imp");
+    if (imp) imp.onchange = async () => {
+      const f = imp.files[0]; if (!f) return;
+      const txt = await f.text();
+      const parsed = parseApo(txt);
+      if (!parsed.filters.length) { toast("No filters found — expected Equalizer APO / AutoEQ format"); return; }
+      FILTERS = parsed.filters; filterSource = f.name;
+      if (parsed.preamp !== null) ch.params.preamp.gain = parsed.preamp;
+      ch.on.add("peq"); ch.dirty = true;
+      toast(`Imported ${parsed.filters.length} filters`);
+      refreshPills(); draw(); openSheet("peq");
+    };
+  }
+  function redrawGraph(id) { const g = $("graph"); if (g) g.innerHTML = graphSvg(); refreshPills(); requestAnimationFrame(draw); }
+
+  function parseApo(txt) {
+    const out = { preamp: null, filters: [] };
+    const pre = txt.match(/Preamp:\s*(-?[\d.]+)\s*dB/i);
+    if (pre) out.preamp = +pre[1];
+    const re = /Filter\s*\d*\s*:\s*ON\s+(PK|PEQ|LSC|LS|HSC|HS|LP|HP)\s+Fc\s+([\d.]+)\s*Hz(?:\s+Gain\s+(-?[\d.]+)\s*dB)?(?:\s+Q\s+([\d.]+))?/gi;
+    let m;
+    while ((m = re.exec(txt))) {
+      let t = m[1].toUpperCase(); if (t === "PEQ") t = "PK"; if (t === "LS") t = "LSC"; if (t === "HS") t = "HSC";
+      out.filters.push({ t, f: +m[2], g: m[3] ? +m[3] : 0, q: m[4] ? +m[4] : 0.707 });
+    }
+    return out;
+  }
+
+  /* ---------------- boot ---------------- */
+  all();
+  new ResizeObserver(() => draw()).observe(board);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { draw(); centerCard(chain().preset, false); });
+})();
+</script>
