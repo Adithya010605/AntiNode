@@ -33,6 +33,7 @@ android {
 dependencies {
     implementation(project(":engine"))
     implementation(project(":core:dsp"))
+    implementation(project(":core:autoeq"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)

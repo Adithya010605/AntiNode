@@ -139,6 +139,23 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     fun setEngineMode(mode: EngineMode) = EngineController.setMode(getApplication(), mode)
     fun engineMode() = EngineController.mode(getApplication())
 
+    // ---------- AutoEQ ----------
+
+    fun applyAutoEq(a: dev.circuiteq.app.ui.autoeq.AutoEqApply) {
+        val s = ui.value.setup ?: return
+        viewModelScope.launch {
+            repo.updateChain(s.id) { c ->
+                c.copy(
+                    enabled = c.enabled + EffectId.PEQ + EffectId.PREAMP + EffectId.LIMITER,
+                    preamp = c.preamp.copy(gainDb = a.preampDb),
+                    peq = dev.circuiteq.core.model.ParametricEq(a.filters, source = "AutoEQ · ${a.headphone} · ${a.label}"),
+                )
+            }
+            if (a.renameOutput) repo.updateSetup(s.id, a.headphone, s.art, s.bypass)
+            _imports.trySend(ImportOutcome("${a.headphone} · ${a.label}", "AutoEQ", emptyList()))
+        }
+    }
+
     // ---------- import / export ----------
 
     fun import(uri: Uri) {

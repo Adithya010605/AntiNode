@@ -98,9 +98,12 @@ class AutoEqCatalog(val entries: List<CatalogEntry>, targets: List<Target>) {
             "HSC" to FilterType.HIGH_SHELF, "HS" to FilterType.HIGH_SHELF, "LP" to FilterType.LOW_PASS, "HP" to FilterType.HIGH_PASS,
         )
 
-        /** Reads the gzipped TSV files written by tools/catalog/build_catalog.py. */
+        /**
+         * Reads the TSV files written by tools/catalog/build_catalog.py, gzipped or not (Android's packager
+         * unpacks .gz assets).
+         */
         fun read(catalog: InputStream, targets: InputStream): AutoEqCatalog {
-            val entries = GZIPInputStream(catalog).bufferedReader().useLines { lines ->
+            val entries = text(catalog).bufferedReader().useLines { lines ->
                 lines.mapNotNull { line ->
                     val c = line.split('\t')
                     if (c.size < 7) return@mapNotNull null
@@ -116,7 +119,7 @@ class AutoEqCatalog(val entries: List<CatalogEntry>, targets: List<Target>) {
                     )
                 }.toList()
             }
-            val targetList = GZIPInputStream(targets).bufferedReader().useLines { lines ->
+            val targetList = text(targets).bufferedReader().useLines { lines ->
                 lines.mapNotNull { line ->
                     val c = line.split('\t')
                     if (c.size < 2) null
@@ -124,6 +127,14 @@ class AutoEqCatalog(val entries: List<CatalogEntry>, targets: List<Target>) {
                 }.toList()
             }
             return AutoEqCatalog(entries, targetList)
+        }
+
+        private fun text(input: InputStream): InputStream {
+            val buffered = java.io.BufferedInputStream(input)
+            buffered.mark(2)
+            val gzip = buffered.read() == 0x1f && buffered.read() == 0x8b
+            buffered.reset()
+            return if (gzip) GZIPInputStream(buffered) else buffered
         }
 
         private fun decode(b64: String): ShortArray {

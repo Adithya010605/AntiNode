@@ -97,6 +97,7 @@ fun EffectSheet(
     onCommit: (Chain) -> Unit,
     onImport: () -> Unit,
     onExport: () -> Unit,
+    onAutoEq: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     var draft by remember(id) { mutableStateOf(chain) }
@@ -151,7 +152,7 @@ fun EffectSheet(
                     }
                 }
                 if (id == EffectId.PEQ) {
-                    PeqEditor(draft, selected, { selected = it }, { draft = it }, sourceName, onImport, onExport)
+                    PeqEditor(draft, selected, { selected = it }, { draft = it }, sourceName, onImport, onExport, onAutoEq)
                 }
             }
 
@@ -236,10 +237,22 @@ private fun PeqEditor(
     sourceName: String?,
     onImport: () -> Unit,
     onExport: () -> Unit,
+    onAutoEq: () -> Unit,
 ) {
     val filters = c.peq.filters
     fun update(i: Int, f: Filter) = set(c.copy(peq = c.peq.copy(filters = filters.toMutableList().also { it[i] = f })))
 
+    Spacer(Modifier.height(16.dp))
+    Row(
+        Modifier.fillMaxWidth().height(52.dp).border(1.5.dp, Palette.Beige, RoundedCornerShape(50)).clickable(onClick = onAutoEq).padding(horizontal = 18.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text("AutoEQ for your headphones", style = Type.PillName.copy(color = Palette.Beige))
+            Text("8,849 profiles · Harman and other targets · offline", style = Type.Value.copy(color = Palette.Beige3))
+        }
+        Text("›", style = Type.SheetTitle)
+    }
     Spacer(Modifier.height(18.dp))
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Eyebrow("Filters · ${filters.size}", Modifier.weight(1f))

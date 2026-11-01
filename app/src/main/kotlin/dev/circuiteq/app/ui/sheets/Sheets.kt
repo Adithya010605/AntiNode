@@ -140,6 +140,7 @@ fun SetupSheet(
     canDelete: Boolean,
     onSave: (String, List<Art>, Boolean) -> Unit,
     onAddHeadphones: (String, List<Art>) -> Unit,
+    onAutoEq: () -> Unit,
     onDelete: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -185,6 +186,8 @@ fun SetupSheet(
             }
             CircuitSwitch(!bypass, { bypass = !it })
         }
+        Spacer(Modifier.height(16.dp))
+        ListRow("Find EQ in AutoEQ", "Correct these headphones to Harman or another target", false, { onSave(name, art, bypass); onAutoEq() })
         Spacer(Modifier.height(20.dp))
         Eyebrow("Several headphones on one DAC?")
         Text(

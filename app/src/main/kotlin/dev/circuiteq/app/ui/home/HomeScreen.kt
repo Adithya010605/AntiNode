@@ -88,6 +88,7 @@ private sealed interface Sheet {
     data object Output : Sheet
     data object Settings : Sheet
     data class PresetActions(val preset: Preset) : Sheet
+    data class AutoEq(val query: String) : Sheet
 }
 
 @Composable
@@ -200,6 +201,7 @@ fun HomeScreen(vm: HomeViewModel) {
             onCommit = { next -> vm.edit { next } },
             onImport = { importLauncher.launch(arrayOf("text/plain", "application/json", "application/octet-stream")) },
             onExport = { exportLauncher.launch("${setup.name} ParametricEQ.txt") },
+            onAutoEq = { sheet = Sheet.AutoEq(autoEqQuery(setup)) },
             onDismiss = { sheet = null },
         )
         Sheet.Profiles -> if (data != null) ProfilesSheet(
@@ -218,6 +220,7 @@ fun HomeScreen(vm: HomeViewModel) {
             canDelete = data.setups.size > 1,
             onSave = { n, art, bypass -> vm.updateSetup(setup.id, n, art, bypass) },
             onAddHeadphones = { n, art -> vm.addHeadphones(n, art) },
+            onAutoEq = { sheet = Sheet.AutoEq(autoEqQuery(setup)) },
             onDelete = { vm.deleteSetup(setup.id) },
             onDismiss = { sheet = null },
         )
@@ -231,6 +234,13 @@ fun HomeScreen(vm: HomeViewModel) {
             onDelete = { vm.deletePreset(s.preset.id) },
             onDismiss = { sheet = null },
         )
+        is Sheet.AutoEq -> if (setup != null) dev.circuiteq.app.ui.autoeq.AutoEqSheet(
+            initialQuery = s.query,
+            outputName = setup.name,
+            suggestRename = setup.deviceKind != dev.circuiteq.core.model.OutputKind.SPEAKER,
+            onApply = vm::applyAutoEq,
+            onDismiss = { sheet = null },
+        )
         null -> Unit
     }
 
@@ -238,7 +248,7 @@ fun HomeScreen(vm: HomeViewModel) {
         AlertDialog(
             onDismissRequest = { imported = null },
             containerColor = Palette.Panel,
-            title = { Text("Imported", style = Type.SheetTitle) },
+            title = { Text("Applied", style = Type.SheetTitle) },
             text = {
                 Column {
                     Text(result.name, style = Type.DeviceName)
@@ -255,6 +265,10 @@ fun HomeScreen(vm: HomeViewModel) {
         TextPrompt("Save preset", initial, "Save", { savingPreset = null }) { vm.savePreset(it); savingPreset = null }
     }
 }
+
+/** Start the AutoEQ search from the output's name unless it's just the device type. */
+private fun autoEqQuery(setup: Setup): String =
+    setup.name.takeIf { it != setup.deviceName && it !in setOf("Phone speaker", "USB", "Headphone jack", "Bluetooth") }.orEmpty()
 
 @Composable
 private fun TopBar(
